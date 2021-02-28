@@ -1,7 +1,7 @@
 This project is an assignment for Deep Learning course. 
 The topic of the project is multimodel problems- specifically, visual question answering (VQA). 
 
-In the folder you can see the instruction of the assignment, and a report of what we have done in the project. 
+In the repo you can find the instructions for the assignment, and a report of what we have done in the project. 
 
 
 Our proposed model is an ensemble of 3 models: 
