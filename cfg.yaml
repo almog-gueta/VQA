@@ -1,0 +1,198 @@
+#-m -p hydra.sweeper
+
+defaults:
+  - hydra/job_logging: disabled
+  - hydra/output_subdir: null
+#  - hydra/sweeper: ax
+
+
+main:
+    experiment_name_prefix: "VQA"
+    seed: 1
+    num_workers: 8
+    parallel: False
+    gpus_to_use: 1,2
+    trains: False
+    paths:
+      train_loader: './data/train_loader.pkl' # '/home/student/hw2/data/train_loader.pkl'
+      val_loader: './data/val_loader.pkl' # '/home/student/hw2/data/val_loader.pkl'
+      train_dataset: './data/train_dataset.pth' # '/home/student/hw2/data/train_dataset.pth'
+      val_dataset: './data/val_dataset.pth' # '/home/student/hw2/data/val_dataset.pth'
+      logs: 'logs/'
+    model_names:
+      q_model_name: 'attention_lstm' #'lstm' #
+      v_model_name: 'attention_cnn' #'cnn' #
+      vqa_model_name: 'atten_lstm_cnn' #'basic_lstm_cnn' #
+
+train:
+    num_epochs: 15
+    grad_clip: 0.25
+#    dropout: 0.3
+#    num_hid: 20
+    batch_size: 64 # 16 # 10
+    save_model: False
+    lr:
+      lr_value: 1e-3
+      lr_decay: 15
+      lr_gamma: 0.1
+      lr_step_size: 3.0 # 0.5 #3.0 # 30.0
+
+main_utils:
+  qa_path: 'datashare'
+  task: 'OpenEnded'
+  dataset: 'mscoco'
+
+vision_utils:
+  train_file_path : "./data/cache/train_img_features.h5" # "/home/student/hw2/data/cache/train_img_features.h5"
+  val_file_path : "./data/cache/val_img_features.h5" # "/home/student/hw2/data/cache/val_img_features.h5"
+  num_train_imgs : 82783
+  num_val_imgs : 40504
+
+dataset:
+  max_q_length: 30  # question_length = min(max_q_length, max_length_in_dataset)
+  resize_h: 224 #365 #640
+  resize_w: 224 #365 #640
+  resize_int: -1 #365 # 320/ 0.875
+  filter_ans_threshold: 9
+
+q_model:
+  lstm:
+    vocab_size: 13278
+    emb_dim: 100
+    hidden_dim: 512 # 2*2*512
+    num_layer: 1
+    num_hid: 1024 # not used
+    output_dim: 1024
+    activation: 'ReLU'
+    dropout: 0.3
+    is_atten: False
+
+  attention_lstm:
+    vocab_size: 13278
+    emb_dim: 100 # 512
+    hidden_dim: 512 # 2*2*512
+    num_layer: 1
+    num_hid: 1000 # not used
+    output_dim: -1 #not used
+    activation: 'ReLU'
+    dropout: 0.3
+    is_atten: True
+
+v_model:
+  cnn:
+    dims: [3, 32, 64, 128] # [3, 32, 64]
+    kernel_size: 3 # 5
+    padding: 1 # 2
+    pool: 2
+    fc_out: 1024
+    activation: 'ReLU'
+    is_atten: False
+    is_autoencoder: False
+
+  attention_cnn:
+    dims: [3, 32, 32, 64, 64, 128, 128, 256, 256] # [3, 32, 64, 128, 256]  # # [3, 16, 32, 64, 128 ,256, 512, 1024] #
+    kernel_size: 3 #5
+    padding: 1 #2
+    pool: 2
+    fc_out: -1 # should be equal to fc_in that is calculated in the model init
+    activation: 'ReLU'
+    is_atten: True
+    is_autoencoder: False
+
+atten_model:
+  projected_dim: 500
+
+vqa_model:
+  basic_lstm_cnn:
+    activation: 'ReLU'
+    num_hid: 2048
+    dropout: 0.3
+    is_concat: True
+  atten_lstm_cnn:
+    activation: 'ReLU'
+    num_hid: 2048
+    dropout: 0.3
+    is_concat: False # True
+
+
+#hydra:
+#    output_subdir: null
+#    run:
+#      dir: logs/hydra
+#    sweeper:
+#      # The following part of config is used to setup the Hydra Ax plugin and is optional
+#      ax_config:
+#        # max_trials is application-specific. Tune it for your use case
+#        max_trials: 20
+#
+#        experiment:
+#          # Default to minimize, set to false to maximize
+#          minimize: False
+#
+#        early_stop:
+#          # Number of epochs without a significant improvement from
+#          # the currently known best parameters
+#          # An Epoch is defined as a batch of trials executed in parallel
+#          max_epochs_without_improvement: 20
+#
+#        params:
+#          train.lr.lr_step_size:
+#            type: choice
+#            values: [3.0, 30.0, 0.5]
+#            value_type: float
+#          q_model.lstm.emb_dim:
+#            type: choice
+#            values: [100, 300]
+#            value_type: int
+#          q_model.lstm.num_layer:
+#            type: choice
+#            values: [1, 2]
+#            value_type: int
+#          q_model.attention_lstm.emb_dim:
+#            type: choice
+#            values: [ 100, 300 ]
+#            value_type: int
+#          q_model.attention_lstm.num_layer:
+#            type: choice
+#            values: [ 1, 2 ]
+#            value_type: int
+#          v_model.cnn.dims:
+#            type: choice
+#            values: [
+#                '[3, 16, 32, 64]',
+#                '[3, 64, 128, 256]',
+#                '[3, 16, 64]',
+#                '[3, 16, 64, 128, 256, 512]',
+#            ]
+#            value_type: str
+#          v_model.attention_cnn.dims:
+#            type: choice
+#            values: ['[3, 16, 32, 64]',
+#                     '[3, 64, 128, 256]',
+#                     '[3, 16, 64]',
+#                     '[3, 16, 64, 128, 256, 512]',
+#            ]
+#            value_type: str
+#          v_model.cnn.kernel_size:
+#            type: choice
+#            values: [3, 5]
+#            value_type: int
+#          v_model.attention_cnn.kernel_size:
+#            type: choice
+#            values: [3, 5]
+#            value_type: int
+#          atten_model.projected_dim:
+#            type: choice
+#            values: [200, 1024]
+#            value_type: int
+#          vqa_model.basic_lstm_cnn.is_concat:
+#            type: choice
+#            values: [ False, True ]
+#            value_type: bool
+#          vqa_model.atten_lstm_cnn.is_concat:
+#            type: choice
+#            values: [ False, True ]
+#            value_type: bool
+
+
+
