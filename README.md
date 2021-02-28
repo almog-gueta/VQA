@@ -1,4 +1,4 @@
-This project is a HW assignment in Deep Learning course. 
+This project is an assignment for Deep Learning course. 
 The topic of the project is multimodel problems- specifically, visual question answering (VQA). 
 
 In the folder you can see the instruction of the assignment, and a report of what we have done in the project. 
